@@ -1,0 +1,47 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    name: Build image
+    runs-on: [self-hosted]
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+      
+    - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          registry: jfrog.it-academy.by
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: denisareshkevich-project/project:latest
+
+    - name: Install kubectl
+      uses: azure/setup-kubectl@v2.0
+      with:
+        version: 'v1.23.3'
+      id: install
+
+    - name: Build, tag, and push image to JFrog
+      env:
+        JFROG_REGISTRY: ${{ jfrog.it-academy.by }}
+        JFROG_REPOSITORY: public/denisareshkevich-project
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $JFROG_REGISTRYJFROG_REGISTRY/$JFROG_REPOSITORY:$IMAGE_TAG -t $JFROG_REGISTRY/$JFROG_REPOSITORY:latest .
+        docker push -a $JFROG_REGISTRY/$JFROG_REPOSITORY
+
+    - name: Deploy to K8S
+      run: |
+        kubectl apply -f k8s/deployment.yaml
