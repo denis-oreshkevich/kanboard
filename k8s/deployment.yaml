@@ -1,0 +1,95 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kanboard
+  name: kanboard
+  namespace: kanboard
+spec:
+  selector:
+    matchLabels:
+      app: kanboard
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kanboard
+    spec:
+      containers:
+      - image: jfrog.it-academy.by/public/denisareshkevich-project:latest
+        name: kanboard
+        ports:
+          - containerPort: 80
+            name: http
+            protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+        env:
+          - name: DEBUG
+            value: 'true'
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+               name: kanboard-secret
+               key: DATABASE_URL
+        volumeMounts:
+          - name: kanboard-data
+            mountPath: /var/www/app/data
+          - name: kanboard-plugins
+            mountPath: /var/www/app/plugins
+      volumes:
+        - name: kanboard-data
+          nfs:
+            server: 192.168.37.105
+            path: /mnt/IT-Academy/nfs-data/sa2-19-22/Denis_Oreshkevich/kanboard_data
+        - name: kanboard-plugins
+          nfs:
+            server: 192.168.37.105
+            path: /mnt/IT-Academy/nfs-data/sa2-19-22/Denis_Oreshkevich/kanboard_plugins
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kanboard-service
+  namespace: kanboard
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+  selector:
+    app: kanboard
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kanboard-ingress
+  namespace: kanboard
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/server-alias: "kanboard.k8s-12.sa"
+spec:
+  rules:
+    - host: kanboard.k8s-11.sa
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kanboard-service
+                port:
+                  number: 80
