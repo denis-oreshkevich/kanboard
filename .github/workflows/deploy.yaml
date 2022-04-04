@@ -16,11 +16,12 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Log in to Docker Hub
-      uses: docker/login-action@v1
-      with:
-          registry: jfrog.it-academy.by
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+      run: docker login jfrog.it-academy.by -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+      #uses: docker/login-action@v1
+      #with:
+      #    registry: jfrog.it-academy.by
+      #    username: ${{ secrets.DOCKER_USERNAME }}
+      #    password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Install kubectl
       uses: azure/setup-kubectl@v2.0
