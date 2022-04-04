@@ -35,7 +35,7 @@ jobs:
 
     - name: Build, tag, and push image to JFrog
       env:
-        JFROG_REGISTRY: ${{ jfrog.it-academy.by }}
+        JFROG_REGISTRY: jfrog.it-academy.by
         JFROG_REPOSITORY: public/denisareshkevich-project
         IMAGE_TAG: ${{ github.sha }}
       run: |
