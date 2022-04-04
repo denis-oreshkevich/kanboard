@@ -10,6 +10,12 @@ jobs:
     runs-on: [self-hosted]
 
     steps:
+    - name: Docker check
+      run: |
+            RUN curl -fsSL https://get.docker.com -o get-docker.sh
+            RUN chmod +x get-docker.sh
+            RUN sh get-docker.sh
+
     - name: Check out code
       uses: actions/checkout@v2
       
