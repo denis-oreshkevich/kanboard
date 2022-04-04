@@ -18,6 +18,7 @@ spec:
     spec:
       containers:
       - image: jfrog.it-academy.by/public/denisareshkevich-project:latest
+        imagePullPolicy: Always
         name: kanboard
         ports:
           - containerPort: 80
