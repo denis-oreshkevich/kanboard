@@ -33,6 +33,7 @@ jobs:
        files: ${{matrix.k8s-files}}
        
   deploy:
+    needs: test-files
     name: Build image
     runs-on: [ubuntu-latest]
 
@@ -54,3 +55,18 @@ jobs:
         ls -la
         docker build -t $JFROG_REGISTRY/$JFROG_REPOSITORY:$IMAGE_TAG -t $JFROG_REGISTRY/$JFROG_REPOSITORY:latest .
         docker push -a $JFROG_REGISTRY/$JFROG_REPOSITORY
+
+  notification:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Slack Notification
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_CHANNEL: oreshkevich-git
+        SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+        SLACK_ICON: https://github.com/rtCamp.png?size=48
+        SLACK_MESSAGE: 'Post Content :rocket:'
+        SLACK_TITLE: Kubeval checks
+        SLACK_USERNAME: GitHub
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
