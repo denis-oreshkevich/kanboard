@@ -38,7 +38,8 @@ jobs:
         ls -la
         docker build -t $JFROG_REGISTRY/$JFROG_REPOSITORY:$IMAGE_TAG -t $JFROG_REGISTRY/$JFROG_REPOSITORY:latest .
         docker push -a $JFROG_REGISTRY/$JFROG_REPOSITORY
-    - uses: actions-hub/kubectl@1.14.3
+
+    - uses: actions-hub/kubectl@master
       env:
         KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
       with:
