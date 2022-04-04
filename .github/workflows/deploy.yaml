@@ -27,12 +27,6 @@ jobs:
       with:
         version: 'v1.23.3'
       id: install
-      
-    - uses: actions-hub/kubectl@1.14.3
-      env:
-        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
-      with:
-        args: get pods
 
     - name: Build, tag, and push image to JFrog
       env:
@@ -43,6 +37,12 @@ jobs:
         ls -la
         docker build -t $JFROG_REGISTRY/$JFROG_REPOSITORY:$IMAGE_TAG -t $JFROG_REGISTRY/$JFROG_REPOSITORY:latest .
         docker push -a $JFROG_REGISTRY/$JFROG_REPOSITORY
+        
+    - uses: actions-hub/kubectl@1.14.3
+      env:
+        KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      with:
+        args: get pods
 
     - name: Deploy to K8S
       run: |
