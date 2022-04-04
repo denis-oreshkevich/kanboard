@@ -1,4 +1,4 @@
-name: Deploy
+name:  Test and Deploy
 
 on:
   push:
@@ -6,9 +6,35 @@ on:
 
 
 jobs:
+  find-k8s-files:
+    runs-on: ubuntu-latest
+    outputs:
+      files: ${{ env.files }}
+    steps:
+      - name: Get k8s files
+        uses: actions/checkout@v2
+        id: files
+      - run: |
+              FILES="$(ls -d ./k8s/* | jq -R -s -c 'split("\n")[:-1]')"
+              echo "files=`echo -n $FILES`" >> $GITHUB_ENV
+              
+  test-files:
+    needs: find-k8s-files
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        k8s-files: ${{fromJson(needs.find-k8s-files.outputs.files)}}
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2 
+    - name: Test files with kubeval
+      uses: instrumenta/kubeval-action@master
+      with: 
+       files: ${{matrix.k8s-files}}
+       
   deploy:
     name: Build image
-    runs-on: [self-hosted]
+    runs-on: [ubuntu-latest]
 
     steps:
     - name: Check out code
@@ -18,17 +44,6 @@ jobs:
       
     - name: Log in to Docker Hub
       run: docker login jfrog.it-academy.by -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
-      #uses: docker/login-action@v1
-      #with:
-      #    registry: jfrog.it-academy.by
-      #    username: ${{ secrets.DOCKER_USERNAME }}
-      #    password: ${{ secrets.DOCKER_PASSWORD }}
-
-    #- name: Install kubectl
-    #  uses: azure/setup-kubectl@v2.0
-    # with:
-    #    version: 'v1.23.3'
-    #  id: install
 
     - name: Build, tag, and push image to JFrog
       env:
@@ -39,8 +54,3 @@ jobs:
         ls -la
         docker build -t $JFROG_REGISTRY/$JFROG_REPOSITORY:$IMAGE_TAG -t $JFROG_REGISTRY/$JFROG_REPOSITORY:latest .
         docker push -a $JFROG_REGISTRY/$JFROG_REPOSITORY
-    
-    - name: Deploy to K8S
-      run: |
-        kubectl apply -f k8s/deployment.yaml
-
